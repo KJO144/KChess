@@ -2,7 +2,7 @@ import numpy as np
 from enum import Enum
 
 def _wins():
-
+    """Returns a list of lists representing winning positions"""
     a = np.array(range(9)).reshape((3,3))
     rows = [list(a[i,:]) for i in range(3)]
     cols = [list(a[:,i]) for i in range(3)]
@@ -16,11 +16,17 @@ class Board():
         self.position = position
         
     def legal_moves(self):
-        """a move is a tuple (square, piece)"""
+        """
+        List of legal moves.
+        A move is a tuple (square, piece).
+        """
         piece_to_play = Piece[self.turn]
         return [(sq, piece_to_play) for sq,piece in self.position.items() if piece == Piece['E']]
                       
     def make_move(self, move):
+        """
+        Return a new board with move played.
+        """
         square, piece = move
         new_pos = self.position.copy()
         new_pos[square] = piece
@@ -28,10 +34,16 @@ class Board():
         return Board(new_pos, new_turn)
     
     def __str__(self):
-        ret = str([str(piece) for sq, piece in self.position.items()]) + f" ({self.turn})"
-        return ret
+        p = self.position
+        ret1 = f"[ {p[0]} {p[1]} {p[2]} ]"
+        ret2 = f"[ {p[3]} {p[4]} {p[5]} ]"
+        ret3 = f"[ {p[6]} {p[7]} {p[8]} ]"
+        return ret1 + "\n" + ret2 + "\n" + ret3
 
     wins = _wins()
+
+    def game_over(self):
+        return self.winner() != 'N' or len(self.legal_moves()) == 0
 
     def winner(self):
         """Returns W if white has won, B if black as won, and N otherwise"""
@@ -50,9 +62,11 @@ class Piece(Enum):
     B = 0
     W = 1
     E = 2
+    def __str__(self):
+        return self.name
 
 def minimax(board, move):
-    """returns a score for move"""
+    """Returns a score for move."""
     
     turn = board.turn
     new_board = board.make_move(move)
@@ -78,3 +92,19 @@ def minimax(board, move):
         ret = max(scores)
 
     return(ret)
+
+def best_move(board):
+    """
+    Returns the best move on the board.
+    """
+
+    legal_moves = board.legal_moves()
+    if len(legal_moves) == 0:
+        return None
+    scores = np.array([minimax(board, move) for move in legal_moves])
+    if board.turn == 'W':
+        index = scores.argmax()
+    else:
+        index = scores.argmin()
+
+    return legal_moves[index]

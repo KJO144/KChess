@@ -1,20 +1,20 @@
-from TTT import minimax, Board, Piece
+from TTT import best_move, Board, Piece
 import cProfile
+import numpy as np
 
-def run():
+def game():
+    pos = {i: Piece['E'] for i in range(9)}
+#    pos[4] = Piece['W']
+#    pos[3] = Piece['W']
+    board = Board(pos, 'W')
 
-    pE = Piece['E']
+    while not board.game_over():
+        print(board)
 
-    pos = {i: pE for i in range(9)}
-    #pos[4] = pW
-    board = Board(pos, 'B')
+        move = best_move(board)        
+        board = board.make_move(move)    
+        
+        print("move: ", move[0], move[1])
+        print("\n")
 
-    legal_moves = board.legal_moves()
-
-    score = [minimax(board, move) for move in legal_moves]
-    for (sq,p),s in zip(legal_moves, score):
-        print(sq, p, s)
-
-
-cProfile.run("run()")
-#run()
+game()
