@@ -1,25 +1,21 @@
 from TTT import minimax, Board, Piece
+import cProfile
 
-pB = Piece('B')
-pW = Piece('W')
-pE = Piece('E')
+def run():
 
-pos = {i: pE for i in range(9)}
+    pB = Piece('B')
+    pW = Piece('W')
+    pE = Piece('E')
 
-#pos[0] = pW
-# pos[1] = pB
-# pos[2] = pW
-# pos[4] = pB
-#pos[3] = pW
-#pos[8] = pB
-#pos[0] = pB
+    pos = {i: pE for i in range(9)}
+    #pos[4] = pW
+    board = Board(pos, 'B')
 
-board = Board(pos, 'W')
+    legal_moves = board.legal_moves()
 
-print(board)
-legal_moves = board.legal_moves()
+    score = [minimax(board, move) for move in legal_moves]
+    for (sq,p),s in zip(legal_moves, score):
+        print(sq, p, s)
 
-score = [minimax(board, move) for move in legal_moves]
-
-for (sq,p),s in zip(legal_moves, score):
-    print(sq, p, s)
+cProfile.run("run()")
+#run()

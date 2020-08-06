@@ -16,8 +16,9 @@ class Board():
         
     def legal_moves(self):
         """a move is a tuple (square, piece)"""
-        return [(sq, Piece(self.turn)) for sq,piece in self.position.items() if piece.type == 'E']
-              
+        piece_to_play = Piece(self.turn)
+        return [(sq, piece_to_play) for sq,piece in self.position.items() if piece.type == 'E']
+                      
     def make_move(self, move):
         square, piece = move
         new_pos = self.position.copy()
@@ -36,18 +37,13 @@ class Board():
         pos = self.position
         wins = self.wins
 
-
-        for win in wins:
-            
-            uniq = list(set([pos[i] for i in win]))
-            if len(uniq) == 1:
-                _type = uniq[0].type
-                if _type != 'E':
-                    return _type
+        for [w0, w1, w2] in wins:
+            if pos[w0] == pos[w1]:
+                if pos[w1] == pos[w2]:
+                    if pos[w0].type != 'E':
+                        return pos[w0].type
         return 'N'
 
-        
-    
 class Piece():
     
     def __init__(self, _type):
