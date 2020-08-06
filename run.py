@@ -3,9 +3,7 @@ import cProfile
 
 def run():
 
-    pB = Piece('B')
-    pW = Piece('W')
-    pE = Piece('E')
+    pE = Piece['E']
 
     pos = {i: pE for i in range(9)}
     #pos[4] = pW
@@ -16,6 +14,7 @@ def run():
     score = [minimax(board, move) for move in legal_moves]
     for (sq,p),s in zip(legal_moves, score):
         print(sq, p, s)
+
 
 cProfile.run("run()")
 #run()

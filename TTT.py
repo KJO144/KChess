@@ -1,4 +1,5 @@
 import numpy as np
+from enum import Enum
 
 def _wins():
 
@@ -16,8 +17,8 @@ class Board():
         
     def legal_moves(self):
         """a move is a tuple (square, piece)"""
-        piece_to_play = Piece(self.turn)
-        return [(sq, piece_to_play) for sq,piece in self.position.items() if piece.type == 'E']
+        piece_to_play = Piece[self.turn]
+        return [(sq, piece_to_play) for sq,piece in self.position.items() if piece == Piece['E']]
                       
     def make_move(self, move):
         square, piece = move
@@ -40,24 +41,15 @@ class Board():
         for [w0, w1, w2] in wins:
             if pos[w0] == pos[w1]:
                 if pos[w1] == pos[w2]:
-                    if pos[w0].type != 'E':
-                        return pos[w0].type
+                    if pos[w0] is not Piece['E']:
+                        return pos[w0].name
         return 'N'
 
-class Piece():
+class Piece(Enum):
     
-    def __init__(self, _type):
-        self.type = _type # B (black), W (white) or E(empty)
-    
-    def __eq__(self, other):
-        return self.type == other.type
-    
-    def __str__(self):
-        return f"{self.type}"
-    
-    def __hash__(self):
-        return({'B': 0, 'W': 1, 'E': 2}[self.type])
-
+    B = 0
+    W = 1
+    E = 2
 
 def minimax(board, move):
     """returns a score for move"""
