@@ -20,7 +20,7 @@ class Board():
         List of legal moves.
         A move is a tuple (square, piece).
         """
-        piece_to_play = Piece[self.turn]
+        piece_to_play = Piece[self.turn.name]
         return [(sq, piece_to_play) for sq,piece in self.position.items() if piece == Piece['E']]
                       
     def make_move(self, move):
@@ -30,7 +30,7 @@ class Board():
         square, piece = move
         new_pos = self.position.copy()
         new_pos[square] = piece
-        new_turn = {'B':'W', 'W': 'B'}[self.turn]
+        new_turn = self.turn.other_player()
         return Board(new_pos, new_turn)
     
     def __str__(self):
@@ -43,7 +43,7 @@ class Board():
     wins = _wins()
 
     def game_over(self):
-        return self.winner() != 'N' or len(self.legal_moves()) == 0
+        return self.winner() is not None or len(self.legal_moves()) == 0
 
     def winner(self):
         """Returns W if white has won, B if black as won, and N otherwise"""
@@ -54,8 +54,8 @@ class Board():
             if pos[w0] == pos[w1]:
                 if pos[w1] == pos[w2]:
                     if pos[w0] is not Piece['E']:
-                        return pos[w0].name
-        return 'N'
+                        return pos[w0].owner()
+        return None
 
 class Piece(Enum):
     
@@ -63,7 +63,22 @@ class Piece(Enum):
     W = 1
     E = 2
     def __str__(self):
-        return self.name
+        return " " if self.name == 'E' else self.name
+    
+    def owner(self):
+        owners = {'B': Player['B'], 'W': Player['W'], 'E': None}
+        return owners[self.name]
+    
+
+class Player(Enum):
+    B = 0
+    W = 1
+
+    def other_player(self):
+        if self.name == 'B':
+            return Player['W']
+        elif self.name == 'W':
+            return Player['B']
 
 def minimax(board, move):
     """Returns a score for move."""
@@ -73,12 +88,12 @@ def minimax(board, move):
     
     winner = new_board.winner()
     
-    if winner == 'W' and turn == 'W':
+    if winner == Player['W'] and turn == Player['W']:
         return 1
-    if winner == 'B' and turn == 'B':
+    if winner == Player['B'] and turn == Player['B']:
         return -1
 
-    assert(winner == 'N')
+    assert(winner == None)
     legal_moves = new_board.legal_moves()
     
     if len(legal_moves) == 0:
@@ -86,9 +101,9 @@ def minimax(board, move):
 
     scores = [minimax(new_board, lm) for lm in legal_moves]
     
-    if turn == 'W':
+    if turn == Player['W']:
         ret = min(scores)
-    if turn == 'B':
+    if turn == Player['B']:
         ret = max(scores)
 
     return(ret)
@@ -102,7 +117,7 @@ def best_move(board):
     if len(legal_moves) == 0:
         return None
     scores = np.array([minimax(board, move) for move in legal_moves])
-    if board.turn == 'W':
+    if board.turn == Player['W']:
         index = scores.argmax()
     else:
         index = scores.argmin()
