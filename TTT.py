@@ -1,5 +1,20 @@
 import numpy as np
 from enum import Enum
+from base import Board, Piece, Player
+
+class TTTPiece(Piece, Enum):
+    
+    B = 0
+    W = 1
+    E = 2
+    def __str__(self):
+        return " " if self.name == 'E' else self.name
+    
+    def owner(self):
+        owners = {'B': Player['B'], 'W': Player['W'], 'E': None}
+        return owners[self.name]
+    
+
 
 def _wins():
     """Returns a list of lists representing winning positions"""
@@ -8,20 +23,23 @@ def _wins():
     cols = [list(a[:,i]) for i in range(3)]
     wins = rows + cols + [[0,4,8]] + [[2,4,6]]
     return(wins)
+
+def _initial_position():
+    return {i: TTTPiece['E'] for i in range(9)}
+
+class TTTBoard(Board):
     
-class Board():
-    
-    def __init__(self, position, turn):
-        self.turn = turn
+    def __init__(self, position = _initial_position(), player_to_move = Player['W']):
+        self.player_to_move = player_to_move
         self.position = position
-        
+    
     def legal_moves(self):
         """
         List of legal moves.
         A move is a tuple (square, piece).
         """
-        piece_to_play = Piece[self.turn.name]
-        return [(sq, piece_to_play) for sq,piece in self.position.items() if piece == Piece['E']]
+        piece_to_play = TTTPiece[self.player_to_move.name]
+        return [(sq, piece_to_play) for sq,piece in self.position.items() if piece == TTTPiece['E']]
                       
     def make_move(self, move):
         """
@@ -30,8 +48,8 @@ class Board():
         square, piece = move
         new_pos = self.position.copy()
         new_pos[square] = piece
-        new_turn = self.turn.other_player()
-        return Board(new_pos, new_turn)
+        new_turn = self.player_to_move.other_player()
+        return TTTBoard(new_pos, new_turn)
     
     def __str__(self):
         p = self.position
@@ -46,80 +64,14 @@ class Board():
         return self.winner() is not None or len(self.legal_moves()) == 0
 
     def winner(self):
-        """Returns W if white has won, B if black as won, and N otherwise"""
+        """If the position is a win returns the winner. Otherwise None."""
         pos = self.position
         wins = self.wins
 
         for [w0, w1, w2] in wins:
             if pos[w0] == pos[w1]:
                 if pos[w1] == pos[w2]:
-                    if pos[w0] is not Piece['E']:
+                    if pos[w0] is not TTTPiece['E']:
                         return pos[w0].owner()
         return None
 
-class Piece(Enum):
-    
-    B = 0
-    W = 1
-    E = 2
-    def __str__(self):
-        return " " if self.name == 'E' else self.name
-    
-    def owner(self):
-        owners = {'B': Player['B'], 'W': Player['W'], 'E': None}
-        return owners[self.name]
-    
-
-class Player(Enum):
-    B = 0
-    W = 1
-
-    def other_player(self):
-        if self.name == 'B':
-            return Player['W']
-        elif self.name == 'W':
-            return Player['B']
-
-def minimax(board, move):
-    """Returns a score for move."""
-    
-    turn = board.turn
-    new_board = board.make_move(move)
-    
-    winner = new_board.winner()
-    
-    if winner == Player['W'] and turn == Player['W']:
-        return 1
-    if winner == Player['B'] and turn == Player['B']:
-        return -1
-
-    assert(winner == None)
-    legal_moves = new_board.legal_moves()
-    
-    if len(legal_moves) == 0:
-        return(0)
-
-    scores = [minimax(new_board, lm) for lm in legal_moves]
-    
-    if turn == Player['W']:
-        ret = min(scores)
-    if turn == Player['B']:
-        ret = max(scores)
-
-    return(ret)
-
-def best_move(board):
-    """
-    Returns the best move on the board.
-    """
-
-    legal_moves = board.legal_moves()
-    if len(legal_moves) == 0:
-        return None
-    scores = np.array([minimax(board, move) for move in legal_moves])
-    if board.turn == Player['W']:
-        index = scores.argmax()
-    else:
-        index = scores.argmin()
-
-    return legal_moves[index]
