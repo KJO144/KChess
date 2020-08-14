@@ -1,18 +1,29 @@
 from TTT import Piece
 from base import Board, Player
 from enum import Enum
+from collections import defaultdict
 
 class DraughtsPiece(Enum):
 
     B = 0
     W = 1
-    E = 2
+    BK = 2
+    WK = 3
+    E = 4
+
+    def promotes_to(self):
+        """What does this piece promote to when it hits the back rank"""
+        return {'B': DraughtsPiece['BK'], 'W': DraughtsPiece['WK']}[self.name]
+
+    def promotion_rank(self):
+        """Which rank does this piece need to get to to promote"""
+        return {'B': 0, 'W': 7, 'BK': None, 'WK': None}[self.name]
 
     def __str__(self):
         return " " if self.name == 'E' else self.name
     
     def owner(self):
-        owners = {'B': Player['B'], 'W': Player['W'], 'E': None}
+        owners = {'B': Player['B'], 'BK': Player['B'], 'W': Player['W'], 'WK': Player['W'], 'E': None}
         return owners[self.name]
 
 def _initial_position():    
@@ -36,39 +47,52 @@ class DraughtsBoard(Board):
         self.player_to_move = player_to_move
         self.position = position
     
-    _moves = {DraughtsPiece['W']: [(1,1), (1,-1)], DraughtsPiece['B']: [(-1,-1), (-1, 1)]}
+    _moves = {
+            DraughtsPiece['W']: [(1,1), (1,-1)],
+            DraughtsPiece['B']: [(-1,-1), (-1, 1)],
+            DraughtsPiece['WK']: [(1,1), (1,-1), (-1,1), (-1,-1)],
+            DraughtsPiece['BK']: [(1,1), (1,-1), (-1,1), (-1,-1)],
+            }
 
     def legal_moves(self):
         """
         List of legal moves.
         A move is a triple of squares (from,to, del). Del is a DraughtsPiece that is taken.
         """
-        
         pos = self.position
         player_to_move = self.player_to_move
         other_player = player_to_move.other_player()
-        lm = []
+        regular_moves = []
+        captures = []
         for from_sq, Piece in pos.items():
             if Piece.owner() == player_to_move:
                 for (xm, ym) in self._moves[Piece]:
                     to_square = (from_sq[0] + xm, from_sq[1] + ym)
                     to_square_beyond = (to_square[0] + xm, to_square[1] + ym)
-                    # regular move
+                    # regular moves
                     if pos.get(to_square) == DraughtsPiece['E']:
-                        lm.append((from_sq, to_square, None))
-                    # capture
+                        regular_moves.append((from_sq, to_square, None))
+                    # captures
                     if pos.get(to_square) == DraughtsPiece[other_player.name] and (pos.get(to_square_beyond) == DraughtsPiece['E']):
-                        lm.append((from_sq, to_square_beyond, to_square))
+                        captures.append((from_sq, to_square_beyond, to_square))
+        if len(captures):
+            lm = captures
+        else:
+            lm = regular_moves
         return lm
 
     def num_pieces(self):
         pos = self.position
-        W = len( [piece for sq, piece in pos.items() if piece.owner == Player['W']])
-        B = len( [piece for sq, piece in pos.items() if piece.owner == Player['B']])
-        return W,B
+        counts = defaultdict(int)
+        for piece in pos.values():
+            counts[piece] += 1
+        return counts
 
     def winner(self):
-        nwhite, nblack = self.num_pieces()
+        counts = self.num_pieces()
+        nwhite = counts[DraughtsPiece['W']] + counts[DraughtsPiece['WK']]
+        nblack = counts[DraughtsPiece['B']] + counts[DraughtsPiece['BK']]
+
         if nwhite == 0 and nblack != 0:
             return Player['B']
         elif nblack == 0 and nwhite != 0:
@@ -77,11 +101,14 @@ class DraughtsBoard(Board):
             return None
 
     def evaluation(self):
-        nwhite, nblack = self.num_pieces()
-        return (nwhite-nblack)-(nwhite+nblack)
+        counts = self.num_pieces()
+        W = counts[DraughtsPiece['W']] + 2*counts[DraughtsPiece['WK']]
+        B = counts[DraughtsPiece['B']] + 2*counts[DraughtsPiece['BK']]
+
+        return (W-B)/(W+B)
 
     def game_over(self):
-        return self.winner is not None
+        return self.winner() is not None
 
     def make_move(self, move):
         """
@@ -90,11 +117,19 @@ class DraughtsBoard(Board):
         player_to_move = self.player_to_move
         from_square, to_square, empty_square = move
         assert(self.position[from_square].owner() == player_to_move)
-                
-        new_pos = self.position.copy()
 
+        new_pos = self.position.copy()
+        
+        moving_piece = new_pos[from_square]
+
+        is_promotion = (to_square[0] == moving_piece.promotion_rank())
+
+        landing_piece = moving_piece if not is_promotion else moving_piece.promotes_to()
+     
+
+        new_pos[to_square] = landing_piece
         new_pos[from_square] = DraughtsPiece['E']
-        new_pos[to_square] = DraughtsPiece[player_to_move.name]
+        
         if empty_square is not None:
             assert(new_pos[empty_square].owner() == player_to_move.other_player())
             new_pos[empty_square] = DraughtsPiece['E']
@@ -108,10 +143,9 @@ class DraughtsBoard(Board):
 
         rows = [" ".join(p[0+i:8+i]) for i in range(0, 8*8, 8)]
         ret = "\n".join([f"[ {x} ]" for x in reversed(rows)])
-        ret+= f" ({self.player_to_move})"
+        evaluation = self.evaluation()
+        ret+= f" ({self.player_to_move}) ({evaluation})"
         return ret
-
-
 
 def squid(move):
     """"""
@@ -120,27 +154,27 @@ def squid(move):
     
 
 
-b = DraughtsBoard()
+# b = DraughtsBoard()
 
-move = ((2,1), (3,0), None)
+# move = ((2,1), (7,0), None)
 
-nb = b.make_move(move)
-print(nb, "\n")
+# nb = b.make_move(move)
+# print(nb, "\n")
 
-lm = nb.legal_moves()
+# lm = nb.legal_moves()
 
-move2 = ((5,2), (4,1), None)
-# move2 = tuple(squid(x) for x in move2)
-nb2 = nb.make_move(move2)
-print(nb2, "\n")
+# move2 = ((5,2), (4,1), None)
+# # move2 = tuple(squid(x) for x in move2)
+# nb2 = nb.make_move(move2)
+# print(nb2, "\n")
 
-move3 = ((3,0), (5,2), (4,1))
-nb3 = nb2.make_move(move3)
-print(nb3, "\n")
+# move3 = ((3,0), (5,2), (4,1))
+# nb3 = nb2.make_move(move3)
+# print(nb3, "\n")
 
-lm = nb3.legal_moves()
-print(lm)
+# lm = nb3.legal_moves()
+# print(lm)
 
-lm =  [squid(move) for move in lm]
-print(lm)
+# lm =  [squid(move) for move in lm]
+# print(lm)
 

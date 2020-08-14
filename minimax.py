@@ -24,8 +24,8 @@ def minimax(board, move, max_depth=None):
     if max_depth:
         max_depth -= 1
 
-    scores = [minimax(new_board, lm) for lm in legal_moves]
-
+    scores = [minimax(new_board, lm, max_depth) for lm in legal_moves]
+    
     if player_to_move == Player['W']:
         ret = min(scores)
     if player_to_move == Player['B']:
@@ -33,14 +33,14 @@ def minimax(board, move, max_depth=None):
 
     return(ret)
 
-def best_move(board):
+def best_move(board, max_depth=None):
     """
     Returns the best move on the board.
     """
 
     legal_moves = board.legal_moves()
     
-    scores = np.array([minimax(board, move) for move in legal_moves])
+    scores = np.array([minimax(board, move, max_depth) for move in legal_moves])
     if board.player_to_move == Player['W']:
         index = scores.argmax()
     else:

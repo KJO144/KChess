@@ -63,6 +63,9 @@ class TTTBoard(Board):
     def game_over(self):
         return self.winner() is not None or len(self.legal_moves()) == 0
 
+    def evaluation(self):
+        pass
+    
     def winner(self):
         """If the position is a win returns the winner. Otherwise None."""
         pos = self.position
