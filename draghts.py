@@ -82,6 +82,7 @@ class DraughtsBoard(Board):
         return lm
 
     def num_pieces(self):
+        """Returns a dict mapping each piece to the counts of that piece on the board"""
         pos = self.position
         counts = defaultdict(int)
         for piece in pos.values():
@@ -89,6 +90,9 @@ class DraughtsBoard(Board):
         return counts
 
     def winner(self):
+        """
+        There is a winner if one side has no pieces.
+        """
         counts = self.num_pieces()
         nwhite = counts[DraughtsPiece['W']] + counts[DraughtsPiece['WK']]
         nblack = counts[DraughtsPiece['B']] + counts[DraughtsPiece['BK']]
@@ -101,6 +105,10 @@ class DraughtsBoard(Board):
             return None
 
     def evaluation(self):
+        """
+        Returns a float representing the evaluation of the board position.
+        Positive/negative if white/black has an advantage.
+        """
         counts = self.num_pieces()
         W = counts[DraughtsPiece['W']] + 2*counts[DraughtsPiece['WK']]
         B = counts[DraughtsPiece['B']] + 2*counts[DraughtsPiece['BK']]
@@ -108,6 +116,9 @@ class DraughtsBoard(Board):
         return (W-B)/(W+B)
 
     def game_over(self):
+        """
+        The game is over if there is a winner.
+        """
         return self.winner() is not None
 
     def make_move(self, move):
