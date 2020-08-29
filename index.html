@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<title>K Draughts</title>
+	
+	<style>
+		table {	border-collapse: collapse; }
+		tr{	line-height: 0px; }
+		td{	padding: 0;	}
+	</style>
+
+	<script>
+	var url_base = 'http://127.0.0.1:5000/'
+
+	function fillSquare(sq, col, piece){
+		let canvas = document.getElementById(sq);
+		let ctx = canvas.getContext("2d");
+		ctx.fillStyle = col;
+		ctx.fillRect(0, 0, 50, 50);
+		colours = {'W': "salmon", 'WK': 'darkred', 'B': "royalblue", 'BK': 'mediumblue'}
+		if(piece!='E'){
+			ctx.beginPath();
+			ctx.fillStyle = colours[piece]
+			ctx.arc(25, 25, 18, 0, 2 * Math.PI);
+			ctx.fill();	
+		}
+		canvas.setAttribute('data-piece', piece)		
+	}
+
+	function drawBoard(){
+		console.log("in drawBoard")
+		let table = document.getElementById("board");
+		let size = 8
+		for(i=0; i<size; i++){
+			let row = table.insertRow(0)			
+			for(j=0; j<size; j++){
+				cell = row.insertCell(-1)
+				sq = 'S' + String(i) + String(j)
+				cell.innerHTML = "<canvas id=\"" + sq + "\" width=\"50\" height=\"50\" data-piece=\"E\" <\/canvas>"
+			}	
+		}		
+	}
+
+	function update_board(position){
+		console.log("in update_board")
+		let size = 8
+		for(i=0; i<size; i++){			
+			for(j=0; j<size; j++){
+				sq = 'S' + String(i) + String(j)
+				if((i+j)%2==0){	col = "#000000"	} else { col = "lightyellow" }
+				fillSquare(sq, col, position[sq])
+			}	
+		}
+		tomove = document.getElementById('board').getAttribute('to-move')
+		if( tomove=='W'){
+			document.getElementById('board').setAttribute('to-move', 'B')
+		}
+		if( tomove=='B'){
+			document.getElementById('board').setAttribute('to-move', 'W')
+		}
+	}
+
+	function get_position(){
+		console.log("in get_position")
+		let size = 8
+		let pos = []
+		for(i=0; i<size; i++){			
+			for(j=0; j<size; j++){
+				sq = 'S' + String(i) + String(j)
+				let el = document.getElementById(sq)				
+				pos.push( sq + "_" + el.getAttribute('data-piece') )
+			}	
+		}
+		tomove = document.getElementById('board').getAttribute('to-move')
+		return(tomove + "&" + pos.join("&"))
+	}
+	
+	function get_update(s) {
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+				json = JSON.parse(xhttp.responseText)
+				document.getElementById('indicator').innerHTML = "Ready."
+				update_board(json)
+			}
+		};
+		document.getElementById('indicator').innerHTML = "Waiting..."
+		xhttp.open('GET', url_base + s, true);
+		xhttp.send();
+	}
+
+	function move(){
+		pos = get_position()
+		get_update("move/" + pos)
+		
+	}
+
+	</script>
+  
+	
+
+</head>
+  
+  <body>
+    <!--<h1 id="demo">Welcome Talia</h1>-->
+	 <h2 id="indicator"></h2>
+	 
+	<button type="button" onclick="move()">Move</button>
+	
+	<table id="board" to-move="W"> </table>
+
+	<script>
+		
+		console.log("calling drawBoard")
+		drawBoard()
+		get_update('initial_position')
+
+
+	</script>
+	
+  </body>
+  
+</html>
+
+
