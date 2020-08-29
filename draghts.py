@@ -20,7 +20,7 @@ class DraughtsPiece(Enum):
         return {'B': 0, 'W': 7, 'BK': None, 'WK': None}[self.name]
 
     def __str__(self):
-        return " " if self.name == 'E' else self.name
+        return self.name
     
     def owner(self):
         owners = {'B': Player['B'], 'BK': Player['B'], 'W': Player['W'], 'WK': Player['W'], 'E': None}
@@ -73,8 +73,9 @@ class DraughtsBoard(Board):
                     if pos.get(to_square) == DraughtsPiece['E']:
                         regular_moves.append((from_sq, to_square, None))
                     # captures
-                    if pos.get(to_square) == DraughtsPiece[other_player.name] and (pos.get(to_square_beyond) == DraughtsPiece['E']):
-                        captures.append((from_sq, to_square_beyond, to_square))
+                    if pos.get(to_square) is not None:
+                        if pos.get(to_square).owner() == other_player and (pos.get(to_square_beyond) == DraughtsPiece['E']):
+                            captures.append((from_sq, to_square_beyond, to_square))
         if len(captures):
             lm = captures
         else:
