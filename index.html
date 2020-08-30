@@ -53,34 +53,33 @@
 		/*
 		Given a new position, update the board.
 		*/
+		//console.log(position)
+		board_pos = position['pos']
+		tomove = position['tomove']
 		for(i=0; i<board_size; i++){			
 			for(j=0; j<board_size; j++){
 				sq = 'S' + String(i) + String(j)
 				if((i+j)%2==0){	col = black_square_col	} else { col = white_square_col }
-				fillSquare(sq, col, position[sq])
+				fillSquare(sq, col, board_pos[sq])
 			}	
 		}
-		tomove = document.getElementById('board').getAttribute('to-move')
-		if( tomove=='W'){
-			document.getElementById('board').setAttribute('to-move', 'B')
-		}
-		if( tomove=='B'){
-			document.getElementById('board').setAttribute('to-move', 'W')
-		}
+		document.getElementById('board').setAttribute('to-move', tomove)
 	}
 
 	function get_position(){
 		console.log("in get_position")
-		let pos = []
+		let pos = {}
 		for(i=0; i<board_size; i++){			
 			for(j=0; j<board_size; j++){
 				sq = 'S' + String(i) + String(j)
 				let el = document.getElementById(sq)				
-				pos.push( sq + "_" + el.getAttribute('data-piece') )
+				pos[sq] = el.getAttribute('data-piece')
 			}	
 		}
 		tomove = document.getElementById('board').getAttribute('to-move')
-		return(tomove + "&" + pos.join("&"))
+		ret = { pos: pos, tomove: tomove}
+
+		return(JSON.stringify(ret))
 	}
 	
 	function get_update(s) {
