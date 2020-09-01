@@ -57,7 +57,7 @@ class DraughtsBoard(Board):
     def legal_moves(self):
         """
         List of legal moves.
-        A move is a triple of squares (from,to, del). Del is a DraughtsPiece that is taken.
+        A move is a pair of squares (from,to).
         """
         pos = self.position
         player_to_move = self.player_to_move
@@ -71,11 +71,11 @@ class DraughtsBoard(Board):
                     to_square_beyond = (to_square[0] + xm, to_square[1] + ym)
                     # regular moves
                     if pos.get(to_square) == DraughtsPiece['E']:
-                        regular_moves.append((from_sq, to_square, None))
+                        regular_moves.append((from_sq, to_square))
                     # captures
                     if pos.get(to_square) is not None:
                         if pos.get(to_square).owner() == other_player and (pos.get(to_square_beyond) == DraughtsPiece['E']):
-                            captures.append((from_sq, to_square_beyond, to_square))
+                            captures.append((from_sq, to_square_beyond))
         if len(captures):
             lm = captures
         else:
@@ -127,24 +127,26 @@ class DraughtsBoard(Board):
         Return a new board with the move played.
         """
         player_to_move = self.player_to_move
-        from_square, to_square, empty_square = move
-        assert(self.position[from_square].owner() == player_to_move)
+        from_square, to_square = move
 
         new_pos = self.position.copy()
         
         moving_piece = new_pos[from_square]
+        assert(moving_piece.owner() == player_to_move)
 
         is_promotion = (to_square[0] == moving_piece.promotion_rank())
 
         landing_piece = moving_piece if not is_promotion else moving_piece.promotes_to()
      
-
         new_pos[to_square] = landing_piece
         new_pos[from_square] = DraughtsPiece['E']
         
-        if empty_square is not None:
+        is_capture = abs(to_square[1] - from_square[1]) == 2 and abs(to_square[0] - from_square[0]) == 2
+        if is_capture:
+            empty_square = ( (to_square[0] + from_square[0])/2, (to_square[1] + from_square[1])/2)
             assert(new_pos[empty_square].owner() == player_to_move.other_player())
             new_pos[empty_square] = DraughtsPiece['E']
+            
         new_turn = player_to_move.other_player()
         return DraughtsBoard(new_pos, new_turn)
 

@@ -16,6 +16,7 @@
 	var piece_colours = {'W': "salmon", 'WK': 'darkred', 'B': "royalblue", 'BK': 'mediumblue'}
 	var square_size = 50
 	var board_size = 8
+	var player_names = {'W': 'White', 'B': 'Black'}
 
 	function fillSquare(sq, col, piece){
 		let canvas = document.getElementById(sq);
@@ -44,7 +45,8 @@
 			for(j=0; j<board_size; j++){
 				cell = row.insertCell(-1)
 				sq = 'S' + String(i) + String(j)
-				cell.innerHTML = `<canvas id=${sq} class="board_square" width=${square_size} height=${square_size} data-piece="E" <\/canvas>`
+				cell.innerHTML = `<canvas id=${sq} draggable="true" ondragstart="dragstart(event)" ondrop="dragDrop(event)" ondragover="allowDrop(event)"
+				class="board_square" width=${square_size} height=${square_size} data-piece="E" <\/canvas>`
 			}	
 		}		
 	}
@@ -68,7 +70,7 @@
 		winner = position['winner']
 		if(winner != null){
 			document.getElementById('move_button').disabled = true
-			document.getElementById('indicator').innerHTML = winner + " wins!"
+			document.getElementById('indicator').innerHTML = player_names[winner] + " wins!"
 		}	
 	}
 
@@ -78,7 +80,7 @@
 	}
 
 	function get_position(){
-		"Returns a JSON representation of the current board position."
+		"Returns an object representing the current board position."
 		let pos = {}
 		board_squares = document.getElementsByClassName('board_square')
 		for(board_square of board_squares){
@@ -89,7 +91,7 @@
 		tomove = document.getElementById('to-move').getAttribute('to-move')
 		ret = {pos: pos, tomove: tomove}
 
-		return(JSON.stringify(ret))
+		return(ret)
 	}
 	
 	function get_update(s) {
@@ -102,13 +104,43 @@
 			}
 		};
 		document.getElementById('indicator').innerHTML = "Waiting..."
-		xhttp.open('GET', url_base + s, true);
+		xhttp.open('GET', url_base + s, false);
 		xhttp.send();
 	}
 
-	function move(){
+	function getMoveFromServer(){
 		pos = get_position()
-		get_update("move/" + pos)
+		pos_json = JSON.stringify(pos)
+		get_update("pos/" + pos_json)
+	}
+
+	function play_move(move){
+		pos = get_position()
+		pos['move'] = move
+		pos_and_move_json = JSON.stringify(pos)
+		get_update("move/" + pos_and_move_json)
+	}
+
+	function dragstart(event){
+		source_ID = event.target.id
+		event.dataTransfer.setData("some_text", source_ID);
+	}
+
+	function dragDrop(event){
+		event.preventDefault(); 
+		orig = event.dataTransfer.getData("some_text"); 
+		dest = event.target.id
+		let move = orig + "_" + dest
+		console.log(`move ${move}`)
+		play_move(move)
+		if( document.getElementById('to-move').getAttribute('to-move')=='B'){
+			getMoveFromServer()
+		}
+		
+	}
+
+	function allowDrop(event){
+		event.preventDefault(); 
 	}
 
 	</script>
@@ -121,15 +153,15 @@
 	 <h2 id="indicator"></h2>
 	
 	<button id='restart_button' type="button" onclick="restart_game()">Restart</button>
-	<button id='move_button' type="button" onclick="move()">Move</button>
+	<button id='move_button' type="button" onclick="getMoveFromServer()">Move</button>
 	<div id='to-move' to-move="W"></div>
 
 	<br>
 
-	<!-- <div id="rectangle" style="width:20 px; height:20 px; background-color:blue">TOMOVE</div> -->
 	<svg width="40" height="20">
 		<rect id='to-move-box' width="40" height="20" style="fill:rgb(0,0,255)"/>
 	</svg>
+	
 	
 	<br><br>
 	<table id="board"> </table>
