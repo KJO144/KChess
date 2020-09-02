@@ -94,31 +94,28 @@
 		return(ret)
 	}
 	
-	function get_update(s) {
-		var xhttp = new XMLHttpRequest();
-		xhttp.onreadystatechange = function() {
-			if (this.readyState == 4 && this.status == 200) {
-				json = JSON.parse(xhttp.responseText)
-				document.getElementById('indicator').innerHTML = "Ready."
-				update_board(json)
-			}
-		};
-		document.getElementById('indicator').innerHTML = "Waiting..."
-		xhttp.open('GET', url_base + s, false);
-		xhttp.send();
+	function get_update(s){
+		url = url_base + s
+		fetch(url).then(response => response.json()).then(json => update_board(json));
 	}
 
 	function getMoveFromServer(){
 		pos = get_position()
 		pos_json = JSON.stringify(pos)
-		get_update("pos/" + pos_json)
+		get_update("pos/" + pos_json)	
 	}
 
 	function play_move(move){
+		// Move is of the format S12_S23.
+		// 1. Sends the move to the server
+		// 2. Gets back the new board and calls update_board
+		// 3. Requests the server to play a move
+		
 		pos = get_position()
 		pos['move'] = move
 		pos_and_move_json = JSON.stringify(pos)
-		get_update("move/" + pos_and_move_json)
+
+		fetch(url_base + "move/" + pos_and_move_json).then(response => response.json()).then(json => update_board(json)).then(x => getMoveFromServer());
 	}
 
 	function dragstart(event){
@@ -133,10 +130,7 @@
 		let move = orig + "_" + dest
 		console.log(`move ${move}`)
 		play_move(move)
-		if( document.getElementById('to-move').getAttribute('to-move')=='B'){
-			getMoveFromServer()
-		}
-		
+		console.log('move played')
 	}
 
 	function allowDrop(event){
@@ -145,12 +139,10 @@
 
 	</script>
   
-	
-
 </head>
   
   <body>
-	 <h2 id="indicator"></h2>
+	 <h2 id="indicator">Let's go!</h2>
 	
 	<button id='restart_button' type="button" onclick="restart_game()">Restart</button>
 	<button id='move_button' type="button" onclick="getMoveFromServer()">Move</button>
@@ -162,8 +154,7 @@
 		<rect id='to-move-box' width="40" height="20" style="fill:rgb(0,0,255)"/>
 	</svg>
 	
-	
-	<br><br>
+		<br><br>
 	<table id="board"> </table>
 
 	<script>
