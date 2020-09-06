@@ -146,7 +146,7 @@ class DraughtsBoard(Board):
             empty_square = ( (to_square[0] + from_square[0])/2, (to_square[1] + from_square[1])/2)
             assert(new_pos[empty_square].owner() == player_to_move.other_player())
             new_pos[empty_square] = DraughtsPiece['E']
-            
+
         new_turn = player_to_move.other_player()
         return DraughtsBoard(new_pos, new_turn)
 
@@ -163,7 +163,7 @@ class DraughtsBoard(Board):
 
 def squid(move):
     """"""
-    from_sq, to_sq, _  = move
+    from_sq, to_sq = move
     return (f"{chr(96+from_sq[1]+1)}{from_sq[0]+1}-{chr(96+to_sq[1]+1)}{to_sq[0]+1}")
     
 

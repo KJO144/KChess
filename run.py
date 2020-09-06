@@ -1,5 +1,6 @@
 from TTT import TTTBoard
-from draghts import DraughtsBoard, DraughtsPiece
+from draughts import DraughtsBoard, DraughtsPiece
+from chess import ChessBoard, ChessPiece
 from minimax import best_move, minimax
 from base import Player
 import cProfile
@@ -7,19 +8,20 @@ import numpy as np
 
 
 
-def game(board, max_depth=None):
-    
-    while not board.game_over():
+def game(board, max_depth=None, num_moves=100):
+    moves = 0
+    while moves<num_moves and not board.game_over():
 
         move = best_move(board, max_depth)        
-        board = board.make_move(move)    
+        board = board.make_move(move)
+        moves += 1
         
         print(board)
         #print("move: ", move[0], move[1])
         print("\n")
 
-b = TTTBoard()
-#b = DraughtsBoard()
+#b = TTTBoard()
+b = ChessBoard()
 
-game(b)
+cProfile.run("game(b,2, 4)")
 #print(b.evaluation())

@@ -113,31 +113,18 @@ class ChessBoard(Board):
         self.can_castle = {'WQS': True, 'BQS': True, 'WKS': True, 'BKS': True}
 
     
-    # def _square_is_attacked  square):
-    #     ppos, os = position
-    #     plpos, ayer_to_move = player_to_move
+    diag_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WB'], ChessPiece['BB']]
+    straight_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WR'], ChessPiece['BR']]
+    knights = [ChessPiece['WN'], ChessPiece['BN']]
+    kings = [ChessPiece['WK'], ChessPiece['BK']]
 
-    #pos,      opposition_pieces = {sq: piece for sq, piece in pos.items() if piece.owner() == player_to_move.other_player()}
 
-
+    def _moves(self, player_to_move):
         
-    #     return False
-
-    def legal_moves(self):
-        """
-        List of legal moves.
-        A move is a pair of squares (from,to).
-        """
         pos = self.position
-        player_to_move = self.player_to_move
 
         moves = []
-        
-        diag_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WB'], ChessPiece['BB']]
-        straight_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WR'], ChessPiece['BR']]
-        knights = [ChessPiece['WN'], ChessPiece['BN']]
-        kings = [ChessPiece['WK'], ChessPiece['BK']]
-        
+                
         relevant_pieces = {sq: piece for sq, piece in pos.items() if piece.owner() == player_to_move}
         
         for from_sq, piece in relevant_pieces.items():
@@ -147,27 +134,29 @@ class ChessBoard(Board):
                 moves += _moves_for_direction(pos, from_sq, 1, (1,-1), only_captures=True)
                 if from_sq[0] == 1:
                     moves += _moves_for_direction(pos, from_sq, 1, (2,0), include_captures=False)
-                
+                continue
+
             if piece == ChessPiece['BP']:
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,0), include_captures=False)
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,1), only_captures=True)
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,-1), only_captures=True)
                 if from_sq[0] == 6:
                     moves += _moves_for_direction(pos, from_sq, 1, (-2,0), include_captures=False)
+                continue
             
-            if piece in diag_movers:
+            if piece in self.diag_movers:
                 moves += _moves_for_direction(pos, from_sq, 7, (1,1))
                 moves += _moves_for_direction(pos, from_sq, 7, (1,-1))
                 moves += _moves_for_direction(pos, from_sq, 7, (-1,-1))
                 moves += _moves_for_direction(pos, from_sq, 7, (-1,1))
             
-            if piece in straight_movers:
+            if piece in self.straight_movers:
                 moves += _moves_for_direction(pos, from_sq, 7, (1,0))
                 moves += _moves_for_direction(pos, from_sq, 7, (-1,0))
                 moves += _moves_for_direction(pos, from_sq, 7, (0,1))
                 moves += _moves_for_direction(pos, from_sq, 7, (0,-1))
 
-            if piece in knights:
+            if piece in self.knights:
                 moves += _moves_for_direction(pos, from_sq, 1, (2,1))
                 moves += _moves_for_direction(pos, from_sq, 1, (2,-1))
                 moves += _moves_for_direction(pos, from_sq, 1, (-2,1))
@@ -177,8 +166,9 @@ class ChessBoard(Board):
                 moves += _moves_for_direction(pos, from_sq, 1, (1,-2))
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,-2))
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,2))
+                continue
 
-            if piece in kings:
+            if piece in self.kings:
                 moves += _moves_for_direction(pos, from_sq, 1, (1,1))
                 moves += _moves_for_direction(pos, from_sq, 1, (1,-1))
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,-1))
@@ -188,14 +178,47 @@ class ChessBoard(Board):
                 moves += _moves_for_direction(pos, from_sq, 1, (0,1))
                 moves += _moves_for_direction(pos, from_sq, 1, (0,-1))
 
-                # if from_sq == (0,4) and can_castle['WKS'] andpos,  pos[(0,5)] == ChessPiece['E'] and pos[(0,6)] == ChessPiece['E']:
-                #     moves += [(0,4), (0,6)]
-                # if can_castle['WQS'] andpos,  pos[(0,3)] == ChessPiece['E'] and pos[(0,2)] == ChessPiece['E'] and pos[(0,1)] == ChessPiece['E']:
-                #     moves += [(0,4), (0,2)]
-
-
-
         return moves
+
+    def puts_me_in_check(self, move):
+        """
+        If move is made am I then in check?
+        I will be in check if my opponent has a move that can capture my king.
+        """
+        new_board = self.make_move(move)
+        moves = new_board._moves(new_board.player_to_move)
+
+        my_king_pos = [sq for sq, piece in new_board.position.items() if piece == ChessPiece[self.player_to_move.name + 'K']]
+        assert(len(my_king_pos)==1)
+        my_king_pos = my_king_pos[0]
+        king_captures = [m for m in moves if m[1] == my_king_pos]
+        
+        return len(king_captures) > 0
+
+    def legal_moves(self):
+        """
+        List of legal moves.
+        A move is a pair of squares (from,to).
+        """
+        
+        # first list all the moves our pieces can make
+        player_to_move = self.player_to_move
+        moves =  self._moves(player_to_move)
+
+        legal_moves = [ m for m in moves if not self.puts_me_in_check(m)]
+
+        return legal_moves
+        # # first figure out if we are in check
+        # player_to_move = self.player_to_move
+        # other_player = player_to_move.other_player()
+
+        # opp_moves = self._moves(other_player)
+        # my_king = ChessPiece[player_to_move.name + "K"]
+        # my_king_pos = [sq for sq, piece in pos.items() if piece == my_king][0]
+
+        # in_check = len([move for move in moves if move[1] == my_king_pos])
+
+
 
     def num_pieces(self):
         """Returns pos, a dict mapping each piece to the counts of that piece on the board"""
