@@ -40,7 +40,15 @@ def _initial_position():
                 p = DraughtsPiece['E']
             pos[square] = p
     return pos
+
+
+def _captures_available(position, player_to_move):
+    board = DraughtsBoard(position, player_to_move)
+    legal_moves = board.legal_moves()
     
+    captures = [move for move in legal_moves if abs(move[0][0]-move[1][0])==2]
+    return len(captures) > 0
+
 class DraughtsBoard(Board):
 
     def __init__(self, position=_initial_position(), player_to_move=Player['W']):
@@ -147,8 +155,13 @@ class DraughtsBoard(Board):
             assert(new_pos[empty_square].owner() == player_to_move.other_player())
             new_pos[empty_square] = DraughtsPiece['E']
 
-        new_turn = player_to_move.other_player()
-        return DraughtsBoard(new_pos, new_turn)
+        new_player_to_move = player_to_move.other_player()
+        
+        multi_capture = is_capture and _captures_available(new_pos, player_to_move)
+        new_player_to_move = player_to_move if multi_capture else player_to_move.other_player()
+        
+        return DraughtsBoard(new_pos, new_player_to_move)
+
 
     def __str__(self):
         """Return a string representation of the board"""
