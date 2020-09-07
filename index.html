@@ -143,13 +143,25 @@
 		event.preventDefault(); 
 	}
 
+	function setGame(game){
+		document.getElementById('game').setAttribute('game', game)
+		restart_game()
+	}
+
 	</script>
   
+	
+
 </head>
   
   <body>
 	 <h2 id="indicator">Let's go!</h2>
 	<div id='game' game='chess' ></div>
+
+	<form action="">
+		<input type="radio" name="gender" value="Chess" onclick="setGame('chess')" checked= "">Chess<br>
+		<input type="radio" name="gender" value="Draughts" onclick="setGame('draughts')">Draughts<br>
+	</form>
 
 	<button id='restart_button' type="button" onclick="restart_game()">Restart</button>
 	<button id='move_button' type="button" onclick="getMoveFromServer()">Move</button>
