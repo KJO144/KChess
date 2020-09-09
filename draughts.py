@@ -51,16 +51,18 @@ def _captures_available(position, player_to_move):
 
 class DraughtsBoard(Board):
 
-    def __init__(self, position=_initial_position(), player_to_move=Player['W']):
-        self.player_to_move = player_to_move
-        self.position = position
-    
+    instreams = [ 'player_to_move', 'position']
     _moves = {
             DraughtsPiece['W']: [(1,1), (1,-1)],
             DraughtsPiece['B']: [(-1,-1), (-1, 1)],
             DraughtsPiece['WK']: [(1,1), (1,-1), (-1,1), (-1,-1)],
             DraughtsPiece['BK']: [(1,1), (1,-1), (-1,1), (-1,-1)],
-            }
+    }
+
+    def __init__(self, position=_initial_position(), player_to_move=Player['W']):
+        self.player_to_move = player_to_move
+        self.position = position
+
 
     def legal_moves(self):
         """
@@ -179,29 +181,3 @@ def squid(move):
     from_sq, to_sq = move
     return (f"{chr(96+from_sq[1]+1)}{from_sq[0]+1}-{chr(96+to_sq[1]+1)}{to_sq[0]+1}")
     
-
-
-# b = DraughtsBoard()
-
-# move = ((2,1), (7,0), None)
-
-# nb = b.make_move(move)
-# print(nb, "\n")
-
-# lm = nb.legal_moves()
-
-# move2 = ((5,2), (4,1), None)
-# # move2 = tuple(squid(x) for x in move2)
-# nb2 = nb.make_move(move2)
-# print(nb2, "\n")
-
-# move3 = ((3,0), (5,2), (4,1))
-# nb3 = nb2.make_move(move3)
-# print(nb3, "\n")
-
-# lm = nb3.legal_moves()
-# print(lm)
-
-# lm =  [squid(move) for move in lm]
-# print(lm)
-

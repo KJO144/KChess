@@ -107,17 +107,17 @@ def _moves_for_direction(pos, start_square, max_distance, direction, include_cap
 
 class ChessBoard(Board):
 
-    def __init__(self, position=_initial_position(), player_to_move=Player['W']):
+    instreams = [ 'player_to_move', 'position', 'can_castle']
+
+    _diag_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WB'], ChessPiece['BB']]
+    _straight_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WR'], ChessPiece['BR']]
+    _knights = [ChessPiece['WN'], ChessPiece['BN']]
+    _kings = [ChessPiece['WK'], ChessPiece['BK']]
+
+    def __init__(self, position=_initial_position(), player_to_move=Player['W'], can_castle={'WQS': True, 'BQS': True, 'WKS': True, 'BKS': True}):
         self.player_to_move = player_to_move
         self.position = position
-        self.can_castle = {'WQS': True, 'BQS': True, 'WKS': True, 'BKS': True}
-
-    
-    diag_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WB'], ChessPiece['BB']]
-    straight_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WR'], ChessPiece['BR']]
-    knights = [ChessPiece['WN'], ChessPiece['BN']]
-    kings = [ChessPiece['WK'], ChessPiece['BK']]
-
+        self.can_castle = can_castle
 
     def _moves(self, player_to_move):
         
@@ -144,19 +144,19 @@ class ChessBoard(Board):
                     moves += _moves_for_direction(pos, from_sq, 1, (-2,0), include_captures=False)
                 continue
             
-            if piece in self.diag_movers:
+            if piece in self._diag_movers:
                 moves += _moves_for_direction(pos, from_sq, 7, (1,1))
                 moves += _moves_for_direction(pos, from_sq, 7, (1,-1))
                 moves += _moves_for_direction(pos, from_sq, 7, (-1,-1))
                 moves += _moves_for_direction(pos, from_sq, 7, (-1,1))
             
-            if piece in self.straight_movers:
+            if piece in self._straight_movers:
                 moves += _moves_for_direction(pos, from_sq, 7, (1,0))
                 moves += _moves_for_direction(pos, from_sq, 7, (-1,0))
                 moves += _moves_for_direction(pos, from_sq, 7, (0,1))
                 moves += _moves_for_direction(pos, from_sq, 7, (0,-1))
 
-            if piece in self.knights:
+            if piece in self._knights:
                 moves += _moves_for_direction(pos, from_sq, 1, (2,1))
                 moves += _moves_for_direction(pos, from_sq, 1, (2,-1))
                 moves += _moves_for_direction(pos, from_sq, 1, (-2,1))
@@ -168,7 +168,7 @@ class ChessBoard(Board):
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,2))
                 continue
 
-            if piece in self.kings:
+            if piece in self._kings:
                 moves += _moves_for_direction(pos, from_sq, 1, (1,1))
                 moves += _moves_for_direction(pos, from_sq, 1, (1,-1))
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,-1))
@@ -177,10 +177,25 @@ class ChessBoard(Board):
                 moves += _moves_for_direction(pos, from_sq, 1, (-1,0))
                 moves += _moves_for_direction(pos, from_sq, 1, (0,1))
                 moves += _moves_for_direction(pos, from_sq, 1, (0,-1))
+                if piece == ChessPiece['WK']:
+                    if self.can_castle['WKS'] and from_sq == (0,4) and pos[(0,5)] == ChessPiece['E'] and pos[(0,6)] == ChessPiece['E'] and pos[(0,7)] == ChessPiece['WR']:
+                        castling = ((0,4), (0,6))
+                        moves.append(castling)
+                    if self.can_castle['WQS'] and from_sq == (0,4) and pos[(0,3)] == ChessPiece['E'] and pos[(0,2)] == ChessPiece['E'] and pos[(0,1)] == ChessPiece['E'] and pos[(0,0)] == ChessPiece['WR']:
+                        castling = ((0,4), (0,2))
+                        moves.append(castling)
+                if piece == ChessPiece['BK']:
+                    if self.can_castle['BKS'] and from_sq == (7,4) and pos[(7,5)] == ChessPiece['E'] and pos[(7,6)] == ChessPiece['E'] and pos[(7,7)] == ChessPiece['BR']:
+                        castling = ((7,4), (7,6))
+                        moves.append(castling)
+                    if self.can_castle['BQS'] and from_sq == (7,4) and pos[(7,3)] == ChessPiece['E'] and pos[(7,2)] == ChessPiece['E'] and pos[(7,1)] == ChessPiece['E'] and pos[(7,0)] == ChessPiece['BR']:
+                        castling = ((7,4), (7,2))
+                        moves.append(castling)
+
 
         return moves
 
-    def puts_me_in_check(self, move):
+    def _puts_me_in_check(self, move):
         """
         If move is made am I then in check?
         I will be in check if my opponent has a move that can capture my king.
@@ -205,22 +220,11 @@ class ChessBoard(Board):
         player_to_move = self.player_to_move
         moves =  self._moves(player_to_move)
 
-        legal_moves = [ m for m in moves if not self.puts_me_in_check(m)]
+        legal_moves = [ m for m in moves if not self._puts_me_in_check(m)]
 
         return legal_moves
-        # # first figure out if we are in check
-        # player_to_move = self.player_to_move
-        # other_player = player_to_move.other_player()
 
-        # opp_moves = self._moves(other_player)
-        # my_king = ChessPiece[player_to_move.name + "K"]
-        # my_king_pos = [sq for sq, piece in pos.items() if piece == my_king][0]
-
-        # in_check = len([move for move in moves if move[1] == my_king_pos])
-
-
-
-    def num_pieces(self):
+    def _num_pieces(self):
         """Returns pos, a dict mapping each piece to the counts of that piece on the board"""
         pos = self.position
         counts = defaultdict(int)
@@ -239,7 +243,7 @@ class ChessBoard(Board):
         Returns a float representing the evaluation of the board position.
         Positive/negative if white/black has an advantage.
         """
-        counts = self.num_pieces()
+        counts = self._num_pieces()
         del counts[ChessPiece['E']]
         sums = defaultdict(int)
 
@@ -248,12 +252,6 @@ class ChessBoard(Board):
         W = sums[Player['W']]
         B = sums[Player['B']]
         return (W-B)/(W+B)
-
-    def game_over(self):
-        """
-        The game is over if there is a winner.
-        """
-        return self.winner() is not None
 
     def make_move(self, move):
         """
@@ -273,15 +271,36 @@ class ChessBoard(Board):
      
         new_pos[to_square] = landing_piece
         new_pos[from_square] = ChessPiece['E']
-        # if can_castle['WKS'] andpos,  moving_piece == ChessPiece['WK'] and to_square[1] == 6 and from_square[1] == 4:
-        #     new_pos[(0,7)] = ChessPiece['E']
-        #     new_pos[(0,5)] = ChessPiece['WR']
-        #     can_castle['WKS'] = Fpos, alse
-           
         
+        if moving_piece == ChessPiece['WK'] and to_square == (0,6) and from_square == (0,4):
+            new_pos[(0,7)] = ChessPiece['E']
+            new_pos[(0,5)] = ChessPiece['WR']
+        
+        if moving_piece == ChessPiece['WK'] and to_square == (0,2) and from_square == (0,4):
+            new_pos[(0,0)] = ChessPiece['E']
+            new_pos[(0,3)] = ChessPiece['WR']
+
+        if moving_piece == ChessPiece['BK'] and to_square == (7,6) and from_square == (7,4):
+            new_pos[(7,7)] = ChessPiece['E']
+            new_pos[(7,5)] = ChessPiece['BR']
+        
+        if moving_piece == ChessPiece['BK'] and to_square == (7,2) and from_square == (7,4):
+            new_pos[(7,0)] = ChessPiece['E']
+            new_pos[(7,3)] = ChessPiece['BR']
+
+
+        can_castle = self.can_castle.copy()
+
+        if moving_piece == ChessPiece['WK']:
+            can_castle['WKS'] = False
+            can_castle['WQS'] = False
+
+        if moving_piece == ChessPiece['BK']:
+            can_castle['BKS'] = False
+            can_castle['BQS'] = False
 
         new_turn = player_to_move.other_player()
-        return ChessBoard(new_pos, new_turn)
+        return ChessBoard(new_pos, new_turn, can_castle)
 
     def __str__(self):
         """Return a string representation of the board"""
@@ -291,22 +310,11 @@ class ChessBoard(Board):
         rows = [" ".join(p[0+i:8+i]) for i in range(0, 8*8, 8)]
         ret = "\n".join([f"[ {x} ]" for x in reversed(rows)])
         evaluation = self.evaluation()
-        ret += f" ({self.player_to_move}) ({evaluation})"
+        cannot_castle = [side for side, value in self.can_castle.items() if value is False]
+        ret += f" ({self.player_to_move}) ({evaluation}) ({cannot_castle})"
         return ret
 
 def squid(move):
     """"""
     from_sq, to_sq = move
     return (f"{chr(96+from_sq[1]+1)}{from_sq[0]+1}-{chr(96+to_sq[1]+1)}{to_sq[0]+1}")
-
-# b = ChessBoard()
-# print(b)
-# print("\n")
-
-# for i in range(10):
-#     lm = b.legal_moves()
-#     move = lm[0]
-#     b = b.make_move(move)
-#     print(squid(move))
-#     print(b)
-#     print("\n\n")

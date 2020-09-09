@@ -21,7 +21,7 @@
 	function draw_piece(sq, piece){
 		// The piece images are expected to be in a sub-folder 'img'
 		let element = document.getElementById(sq)
-		let game = document.getElementById('game').getAttribute('game')
+		let game = get_game()
 		let src = `img/${game}_${piece}.png`
 		element.setAttribute('src', src)		
 		element.setAttribute('data-piece', piece)		
@@ -52,8 +52,8 @@
 		/*
 		Given a new position, update the board.
 		*/
-		let board_pos = position['pos']
-		let tomove = position['tomove']
+		let board_pos = position['position']
+		let tomove = position['player_to_move']
 		for(i=0; i<board_size; i++){			
 			for(j=0; j<board_size; j++){
 				let sq = 'S' + String(i) + String(j)
@@ -67,7 +67,16 @@
 		if(winner != null){
 			document.getElementById('move_button').disabled = true
 			document.getElementById('indicator').innerHTML = player_names[winner] + " wins!"
-		}	
+		}
+
+		if (get_game() == 'chess'){
+			for( ctype of ['WKS', 'WQS', 'BKS', 'BQS']){
+				let val = position['can_castle'][ctype]
+				let sval = String(val)	
+			
+				document.getElementById(ctype).setAttribute('value', sval)
+			}
+		}
 	}
 
 	function restart_game(){
@@ -84,14 +93,29 @@
 			let piece = board_square.getAttribute('data-piece')
 			pos[sq] = piece
 		}
-		let tomove = document.getElementById('to-move').getAttribute('to-move')
-		let ret = {pos: pos, tomove: tomove}
+		let tomove = get_tomove()
+	
+		let ret = {position: pos, player_to_move: tomove}
 
+		let castling = document.getElementsByClassName('castling')
+		
+		let castling_rights = {}
+		for(element of castling){
+			let value = element.getAttribute('value')
+			let key = element.getAttribute('id')
+			castling_rights[key] = JSON.parse(value)
+		}
+		
+		ret['can_castle'] = castling_rights
 		return(ret)
 	}
 	
 	function get_game(){
 		return(document.getElementById('game').getAttribute('game'))
+	}
+
+	function get_tomove(){
+		return(document.getElementById('to-move').getAttribute('to-move'))
 	}
 
 	function get_initial_position(){
@@ -102,14 +126,15 @@
 	function getMoveFromServer(){
 		let pos = get_position()
 		let pos_json = JSON.stringify(pos)
-		let old_tomove = document.getElementById('to-move').getAttribute('to-move')
+		let old_tomove = get_tomove()
 		
 		let url = url_base + get_game() + "/pos/" + pos_json
+
 		fetch(url)
 			.then(response => response.json())
 			.then(json => update_board(json))
 			.then(function(){
-				let new_tomove = document.getElementById('to-move').getAttribute('to-move')
+				let new_tomove = get_tomove()
 				if(new_tomove == old_tomove){getMoveFromServer()}
 			}
 			);
@@ -123,15 +148,20 @@
 		
 		let pos = get_position()
 		pos['move'] = move
-		let tomove = pos['tomove']
+		let tomove = pos['player_to_move']
 		let pos_and_move_json = JSON.stringify(pos)
-		console.log('in playmove ' + tomove)
-		fetch(url_base + get_game() + "/" + "move/" + pos_and_move_json)
+		url = url_base + get_game() + "/" + "move/" + pos_and_move_json
+		
+		fetch(url)
+// first call the 'move' API to make the user's move
 			.then(response => response.json())
 			.then(json => update_board(json))
+// now call the 'pos' API to get the computer's response
 			.then(function(){
-				let new_mover = document.getElementById('to-move').getAttribute('to-move')
-				if( new_mover != tomove ){getMoveFromServer()}
+				let new_mover = get_tomove()
+				if( new_mover != tomove ){
+					getMoveFromServer()
+				}	
 			}
 			);
 	}
@@ -171,6 +201,11 @@
 	 <h2 id="indicator">Let's go!</h2>
 	<div id='game' game='chess' ></div>
 
+	<div id='WKS' value='true' style='display: none' class='castling'></div>
+	<div id='WQS' value='true' style='display: none' class='castling'></div>
+	<div id='BKS' value='true' style='display: none' class='castling'></div>
+	<div id='BQS' value='true' style='display: none' class='castling'></div>
+	
 	<form action="">
 		<input type="radio" name="gender" value="Chess" onclick="setGame('chess')" checked= "">Chess<br>
 		<input type="radio" name="gender" value="Draughts" onclick="setGame('draughts')">Draughts<br>
