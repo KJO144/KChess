@@ -5,26 +5,29 @@ from collections import defaultdict
 
 class DraughtsPiece(Enum):
 
-    B = 0
-    W = 1
-    BK = 2
-    WK = 3
-    E = 4
+    B = ('B', 'BK', 0)
+    W = ('W', 'WK', 7)
+    BK = ('B', None, None)
+    WK = ('W', None, None)
+    E = (None, None, None)
+
+    def __init__(self, owner_name, promotes_to_name, promotion_rank):
+        self.owner_name = owner_name
+        self.promotes_to_name = promotes_to_name
+        self.promotion_rank = promotion_rank
 
     def promotes_to(self):
         """What does this piece promote to when it hits the back rank"""
-        return {'B': DraughtsPiece['BK'], 'W': DraughtsPiece['WK']}[self.name]
-
-    def promotion_rank(self):
-        """Which rank does this piece need to get to to promote"""
-        return {'B': 0, 'W': 7, 'BK': None, 'WK': None}[self.name]
+        return DraughtsPiece[self.promotes_to_name]
 
     def __str__(self):
         return self.name
-    
+
     def owner(self):
-        owners = {'B': Player['B'], 'BK': Player['B'], 'W': Player['W'], 'WK': Player['W'], 'E': None}
-        return owners[self.name]
+        if self.owner_name:
+            return Player[self.owner_name]
+        else:
+            return None
 
 def _initial_position():    
     pos = {}
@@ -144,7 +147,7 @@ class DraughtsBoard(Board):
         moving_piece = new_pos[from_square]
         assert(moving_piece.owner() == player_to_move)
 
-        is_promotion = (to_square[0] == moving_piece.promotion_rank())
+        is_promotion = (to_square[0] == moving_piece.promotion_rank)
 
         landing_piece = moving_piece if not is_promotion else moving_piece.promotes_to()
      
@@ -159,8 +162,8 @@ class DraughtsBoard(Board):
 
         new_player_to_move = player_to_move.other_player()
         
-        multi_capture = is_capture and _captures_available(new_pos, player_to_move)
-        new_player_to_move = player_to_move if multi_capture else player_to_move.other_player()
+        is_multi_capture = is_capture and _captures_available(new_pos, player_to_move)
+        new_player_to_move = player_to_move if is_multi_capture else player_to_move.other_player()
         
         return DraughtsBoard(new_pos, new_player_to_move)
 

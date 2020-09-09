@@ -11,7 +11,7 @@ def minimax(board, move, max_depth=None):
     
     if winner is not None:
         assert(player_to_move == winner)
-        return winner.top_score()
+        return winner.top_score
 
     if max_depth == 0:
         return new_board.evaluation()

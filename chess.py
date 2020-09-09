@@ -4,42 +4,39 @@ from collections import defaultdict
 
 class ChessPiece(Enum):
 
-    WK = 0
-    WQ = 1
-    WB = 2
-    WN = 3
-    WR = 4
-    WP = 5
+    WK = ('W', 7, 999, "King")
+    WQ = ('W', 7, 9, "Queen")
+    WB = ('W', 7, 3, "Bishop")
+    WN = ('W', 7, 3, "Knight")
+    WR = ('W', 7, 5, "Rook")
+    WP = ('W', 7, 1, "Pawn")
 
-    BK = 6
-    BQ = 7
-    BB = 8
-    BN = 9
-    BR = 10
-    BP = 11
+    BK = ('B', 0, 999, "King")
+    BQ = ('B', 0, 9, "Queen")
+    BB = ('B', 0, 3, "Bishop")
+    BN = ('B', 0, 3, "Knight")
+    BR = ('B', 0, 5, "Rook")
+    BP = ('B', 0, 1, "Pawn")
 
-    E = 12
+    E = (None, None, None, None)
+
+    def __init__(self, owner_name, promotion_rank, gvalue, type):
+        self.owner_name = owner_name
+        self.promotion_rank = promotion_rank
+        self.gvalue = gvalue
+        self.type = type
 
     def owner(self):
-        L = self.name[0]
-        ret = L if L=='E' else Player[L]
-        return ret
+        if self.owner_name:
+            return Player[self.owner_name]
+        else:
+            return None
 
     def promotes_to(self):
         """What does this piece promote to when it hits the back rank"""
         vals = {'WP': ChessPiece['WQ'], 'BP': ChessPiece['BQ']}
         return vals.get( self.name, self.name)
         
-    def promotion_rank(self):
-        """Which row does this piece need to get to to promote"""
-        vals = {'BP': 0, 'WP': 7}
-        return vals.get( self.name, None)
-
-    def value(self):
-        values = {'K': 999, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 1}
-        T = self.name[1]
-        return values[T]
-
     def __str__(self):
         ret = "E " if self.name == "E" else self.name
         return ret
@@ -77,8 +74,6 @@ def _initial_position():
 
 def _offset_square(square, offset):
     return (square[0]+offset[0], square[1]+offset[1])
-
-
 
 def _moves_for_direction(pos, start_square, max_distance, direction, include_captures=True, only_captures=False):
     end_squares = []
@@ -248,7 +243,7 @@ class ChessBoard(Board):
         sums = defaultdict(int)
 
         for piece, count in counts.items():
-            sums[piece.owner()] += count * piece.value()
+            sums[piece.owner()] += count * piece.gvalue
         W = sums[Player['W']]
         B = sums[Player['B']]
         return (W-B)/(W+B)
@@ -265,7 +260,7 @@ class ChessBoard(Board):
         moving_piece = new_pos[from_square]
         assert(moving_piece.owner() == player_to_move)
 
-        is_promotion = (to_square[0] == moving_piece.promotion_rank())
+        is_promotion = (to_square[0] == moving_piece.promotion_rank)
 
         landing_piece = moving_piece if not is_promotion else moving_piece.promotes_to()
      

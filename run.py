@@ -10,7 +10,7 @@ import numpy as np
 
 def game(board, max_depth=None, num_moves=100):
     moves = 0
-    while moves<num_moves and not board.game_over():
+    while moves<num_moves:
 
         move = best_move(board, max_depth)        
         board = board.make_move(move)
@@ -21,7 +21,9 @@ def game(board, max_depth=None, num_moves=100):
         print("\n")
 
 #b = TTTBoard()
-b = ChessBoard()
-
-cProfile.run("game(b,2, 4)")
+b = DraughtsBoard()
+game(b,2, 4)
+#print(b.legal_moves())
+#rint(b)
+#cProfile.run("game(b,2, 4)")
 #print(b.evaluation())

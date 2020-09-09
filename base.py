@@ -42,15 +42,13 @@ class Board(ABC):
 
 
 class Player(Enum):
-    B = 0
-    W = 1
+    B = (-1, 'W')
+    W = (1, 'B')
+
+    def __init__(self, top_score, other_player_name):
+        self.top_score = top_score
+        self.other_player_name = other_player_name
 
     def other_player(self):
-        if self.name == 'B':
-            return Player['W']
-        elif self.name == 'W':
-            return Player['B']
+        return Player[self.other_player_name]
 
-    def top_score(self):
-        return {'B': -1, 'W': 1}[self.name]
-    
