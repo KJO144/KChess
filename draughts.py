@@ -1,7 +1,7 @@
-from TTT import Piece
 from base import Board, Player
 from enum import Enum
 from collections import defaultdict
+
 
 class DraughtsPiece(Enum):
 
@@ -29,15 +29,16 @@ class DraughtsPiece(Enum):
         else:
             return None
 
-def _initial_position():    
+
+def _initial_position():
     pos = {}
     for i in range(8):
         for j in range(8):
-            square = (i,j)# row, column
-            
-            if (i+j)%2 == 1 and i<=2:
+            square = (i, j)
+
+            if (i+j) % 2 == 1 and i <= 2:
                 p = DraughtsPiece['W']
-            elif (i+j)%2 == 1 and i>=5:
+            elif (i+j) % 2 == 1 and i >= 5:
                 p = DraughtsPiece['B']
             else:
                 p = DraughtsPiece['E']
@@ -49,24 +50,24 @@ def _captures_available(position, player_to_move, from_sq):
     "Are there captures available by the piece at from_sq"
     board = DraughtsBoard(position, player_to_move)
     legal_moves = board.legal_moves()
-    
-    captures = [move for move in legal_moves if move[0] == from_sq and abs(move[0][0]-move[1][0])==2]
+
+    captures = [move for move in legal_moves if move[0] == from_sq and abs(move[0][0]-move[1][0]) == 2]
     return len(captures) > 0
+
 
 class DraughtsBoard(Board):
 
-    instreams = [ 'player_to_move', 'position']
+    instreams = ['player_to_move', 'position']
     _moves = {
-            DraughtsPiece['W']: [(1,1), (1,-1)],
-            DraughtsPiece['B']: [(-1,-1), (-1, 1)],
-            DraughtsPiece['WK']: [(1,1), (1,-1), (-1,1), (-1,-1)],
-            DraughtsPiece['BK']: [(1,1), (1,-1), (-1,1), (-1,-1)],
+            DraughtsPiece['W']: [(1, 1), (1, -1)],
+            DraughtsPiece['B']: [(-1, -1), (-1, 1)],
+            DraughtsPiece['WK']: [(1, 1), (1, -1), (-1, 1), (-1, -1)],
+            DraughtsPiece['BK']: [(1, 1), (1, -1), (-1, 1), (-1, -1)],
     }
 
     def __init__(self, position=_initial_position(), player_to_move=Player['W']):
         self.player_to_move = player_to_move
         self.position = position
-
 
     def legal_moves(self):
         """
@@ -78,17 +79,18 @@ class DraughtsBoard(Board):
         other_player = player_to_move.other_player()
         regular_moves = []
         captures = []
+        empty = DraughtsPiece['E']
         for from_sq, Piece in pos.items():
             if Piece.owner() == player_to_move:
                 for (xm, ym) in self._moves[Piece]:
                     to_square = (from_sq[0] + xm, from_sq[1] + ym)
                     to_square_beyond = (to_square[0] + xm, to_square[1] + ym)
                     # regular moves
-                    if pos.get(to_square) == DraughtsPiece['E']:
+                    if pos.get(to_square) == empty:
                         regular_moves.append((from_sq, to_square))
                     # captures
                     if pos.get(to_square) is not None:
-                        if pos.get(to_square).owner() == other_player and (pos.get(to_square_beyond) == DraughtsPiece['E']):
+                        if pos.get(to_square).owner() == other_player and (pos.get(to_square_beyond) == empty):
                             captures.append((from_sq, to_square_beyond))
         if len(captures):
             lm = captures
@@ -144,31 +146,30 @@ class DraughtsBoard(Board):
         from_square, to_square = move
 
         new_pos = self.position.copy()
-        
+
         moving_piece = new_pos[from_square]
         assert(moving_piece.owner() == player_to_move)
 
         is_promotion = (to_square[0] == moving_piece.promotion_rank)
 
         landing_piece = moving_piece if not is_promotion else moving_piece.promotes_to()
-     
+
         new_pos[to_square] = landing_piece
         new_pos[from_square] = DraughtsPiece['E']
-        
+
         is_capture = abs(to_square[1] - from_square[1]) == 2 and abs(to_square[0] - from_square[0]) == 2
         if is_capture:
-            empty_square = ( (to_square[0] + from_square[0])/2, (to_square[1] + from_square[1])/2)
+            empty_square = ((to_square[0] + from_square[0])/2, (to_square[1] + from_square[1])/2)
             assert(new_pos[empty_square].owner() == player_to_move.other_player())
             new_pos[empty_square] = DraughtsPiece['E']
 
         new_player_to_move = player_to_move.other_player()
 
-        # if there are more captures available with the same piece, then don't flip player_to_move        
+        # if there are more captures available with the same piece, then don't flip player_to_move
         is_multi_capture = is_capture and _captures_available(new_pos, player_to_move, to_square)
         new_player_to_move = player_to_move if is_multi_capture else player_to_move.other_player()
-        
-        return DraughtsBoard(new_pos, new_player_to_move)
 
+        return DraughtsBoard(new_pos, new_player_to_move)
 
     def __str__(self):
         """Return a string representation of the board"""
@@ -178,11 +179,11 @@ class DraughtsBoard(Board):
         rows = [" ".join(p[0+i:8+i]) for i in range(0, 8*8, 8)]
         ret = "\n".join([f"[ {x} ]" for x in reversed(rows)])
         evaluation = self.evaluation()
-        ret+= f" ({self.player_to_move}) ({evaluation})"
+        ret += f" ({self.player_to_move}) ({evaluation})"
         return ret
+
 
 def squid(move):
     """"""
     from_sq, to_sq = move
     return (f"{chr(96+from_sq[1]+1)}{from_sq[0]+1}-{chr(96+to_sq[1]+1)}{to_sq[0]+1}")
-    
