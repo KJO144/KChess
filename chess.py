@@ -301,7 +301,8 @@ class ChessBoard(Board):
             can_castle['BQS'] = False
 
         new_turn = player_to_move.other_player()
-        return ChessBoard(new_pos, new_turn, can_castle)
+
+        return ChessBoard(position=new_pos, player_to_move=new_turn, can_castle=can_castle)
 
     def __str__(self):
         """Return a string representation of the board"""
