@@ -45,11 +45,12 @@ def _initial_position():
     return pos
 
 
-def _captures_available(position, player_to_move):
+def _captures_available(position, player_to_move, from_sq):
+    "Are there captures available by the piece at from_sq"
     board = DraughtsBoard(position, player_to_move)
     legal_moves = board.legal_moves()
     
-    captures = [move for move in legal_moves if abs(move[0][0]-move[1][0])==2]
+    captures = [move for move in legal_moves if move[0] == from_sq and abs(move[0][0]-move[1][0])==2]
     return len(captures) > 0
 
 class DraughtsBoard(Board):
@@ -161,8 +162,9 @@ class DraughtsBoard(Board):
             new_pos[empty_square] = DraughtsPiece['E']
 
         new_player_to_move = player_to_move.other_player()
-        
-        is_multi_capture = is_capture and _captures_available(new_pos, player_to_move)
+
+        # if there are more captures available with the same piece, then don't flip player_to_move        
+        is_multi_capture = is_capture and _captures_available(new_pos, player_to_move, to_square)
         new_player_to_move = player_to_move if is_multi_capture else player_to_move.other_player()
         
         return DraughtsBoard(new_pos, new_player_to_move)
