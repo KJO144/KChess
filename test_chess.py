@@ -6,7 +6,7 @@ def test_starting_pos_legal_moves():
     b = ChessBoard()
     lm = b.legal_moves()
 
-    assert(len(lm) == 20)
+    assert len(lm) == 20
 
 
 def test_castling_WKS():
@@ -22,7 +22,7 @@ def test_castling_WKS():
     # check white can castle now
     white_castle = ((0, 4), (0, 6))
     legal_moves = b.legal_moves()
-    assert(white_castle in legal_moves)
+    assert white_castle in legal_moves
 
     b = b.make_move(((0, 4), (1, 4)))  # Ke2
 
@@ -36,9 +36,9 @@ def test_castling_WKS():
     b = b.make_move(((6, 4), (7, 4)))  # Ke8
 
     # check white cannot castle
-    assert(white_castle not in b.legal_moves())
+    assert white_castle not in b.legal_moves()
 
     b = b.make_move(((0, 1), (2, 2)))  # Nc3
 
     # check black cannot castle
-    assert(black_castle not in b.legal_moves())
+    assert black_castle not in b.legal_moves()
