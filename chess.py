@@ -125,7 +125,29 @@ class ChessBoard(Board):
 
         pos = self.position
 
+        WR = ChessPiece['WR']
+        BR = ChessPiece['BR']
+
+        a1 = (0, 0)
+        b1 = (0, 1)
+        c1 = (0, 2)
+        d1 = (0, 3)
+        e1 = (0, 4)
+        f1 = (0, 5)
+        g1 = (0, 6)
+        h1 = (0, 7)
+
+        a8 = (7, 0)
+        b8 = (7, 1)
+        c8 = (7, 2)
+        d8 = (7, 3)
+        e8 = (7, 4)
+        f8 = (7, 5)
+        g8 = (7, 6)
+        h8 = (7, 7)
+
         moves = []
+        E = ChessPiece['E']
 
         relevant_pieces = {sq: piece for sq, piece in pos.items() if piece.owner() == player_to_move}
 
@@ -179,20 +201,16 @@ class ChessBoard(Board):
                 moves += _moves_for_direction(pos, from_sq, 1, (-1, 0))
                 moves += _moves_for_direction(pos, from_sq, 1, (0, 1))
                 moves += _moves_for_direction(pos, from_sq, 1, (0, -1))
-                if piece == ChessPiece['WK']:
-                    if self.can_castle['WKS'] and from_sq == (0, 4) and pos[(0, 5)] == ChessPiece['E'] and pos[(0, 6)] == ChessPiece['E'] and pos[(0, 7)] == ChessPiece['WR']:
-                        castling = ((0, 4), (0, 6))
-                        moves.append(castling)
-                    if self.can_castle['WQS'] and from_sq == (0, 4) and pos[(0, 3)] == ChessPiece['E'] and pos[(0, 2)] == ChessPiece['E'] and pos[(0, 1)] == ChessPiece['E'] and pos[(0, 0)] == ChessPiece['WR']:
-                        castling = ((0, 4), (0, 2))
-                        moves.append(castling)
-                if piece == ChessPiece['BK']:
-                    if self.can_castle['BKS'] and from_sq == (7, 4) and pos[(7, 5)] == ChessPiece['E'] and pos[(7, 6)] == ChessPiece['E'] and pos[(7, 7)] == ChessPiece['BR']:
-                        castling = ((7, 4), (7, 6))
-                        moves.append(castling)
-                    if self.can_castle['BQS'] and from_sq == (7, 4) and pos[(7, 3)] == ChessPiece['E'] and pos[(7, 2)] == ChessPiece['E'] and pos[(7, 1)] == ChessPiece['E'] and pos[(7, 0)] == ChessPiece['BR']:
-                        castling = ((7, 4), (7, 2))
-                        moves.append(castling)
+                if piece == ChessPiece['WK'] and from_sq == e1:
+                    if self.can_castle['WKS'] and pos[f1] == E and pos[g1] == E and pos[h1] == WR:
+                        moves.append((e1, g1))
+                    if self.can_castle['WQS'] and pos[d1] == E and pos[c1] == E and pos[b1] == E and pos[a1] == WR:
+                        moves.append((e1, c1))
+                if piece == ChessPiece['BK'] and from_sq == e8:
+                    if self.can_castle['BKS'] and pos[f8] == E and pos[g8] == E and pos[h8] == BR:
+                        moves.append((e8, g8))
+                    if self.can_castle['BQS'] and pos[d8] == E and pos[c8] == E and pos[b8] == E and pos[a8] == BR:
+                        moves.append((e8, c8))
 
         return moves
 
