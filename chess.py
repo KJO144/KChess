@@ -36,7 +36,7 @@ class ChessPiece(Enum):
     def promotes_to(self):
         """What does this piece promote to when it hits the back rank"""
         vals = {'WP': ChessPiece['WQ'], 'BP': ChessPiece['BQ']}
-        return vals.get(self.name, self.name)
+        return vals.get(self.name, self)
 
     def __str__(self):
         ret = "E " if self.name == "E" else self.name
