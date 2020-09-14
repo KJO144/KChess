@@ -5,14 +5,14 @@ from collections import defaultdict
 
 class DraughtsPiece(Enum):
 
-    B = ('B', 'BK', 0)
-    W = ('W', 'WK', 7)
-    BK = ('B', None, None)
-    WK = ('W', None, None)
+    B = (Player['B'], 'BK', 0)
+    W = (Player['W'], 'WK', 7)
+    BK = (Player['B'], None, None)
+    WK = (Player['W'], None, None)
     E = (None, None, None)
 
-    def __init__(self, owner_name, promotes_to_name, promotion_rank):
-        self.owner_name = owner_name
+    def __init__(self, owner, promotes_to_name, promotion_rank):
+        self.owner = owner
         self.promotes_to_name = promotes_to_name
         self.promotion_rank = promotion_rank
 
@@ -22,12 +22,6 @@ class DraughtsPiece(Enum):
 
     def __str__(self):
         return self.name
-
-    def owner(self):
-        if self.owner_name:
-            return Player[self.owner_name]
-        else:
-            return None
 
 
 def _initial_position():
@@ -85,7 +79,7 @@ class DraughtsBoard(Board):
         prev_move = self.previous_move
         # check if we are in the middle of a multicapture. If so, we can only move the capturing piece.
         if prev_move != "none":
-            prev_player = pos[prev_move[1]].owner()
+            prev_player = pos[prev_move[1]].owner
             was_capture = self._move_is_capture(prev_move)
             if prev_player == player_to_move and was_capture:
                 valid_piece = prev_move[1]
@@ -93,7 +87,7 @@ class DraughtsBoard(Board):
         for from_sq, Piece in pos.items():
             if valid_piece and valid_piece != from_sq:
                 continue
-            if Piece.owner() == player_to_move:
+            if Piece.owner == player_to_move:
                 for (xm, ym) in self._moves[Piece]:
                     to_square = (from_sq[0] + xm, from_sq[1] + ym)
                     to_square_beyond = (to_square[0] + xm, to_square[1] + ym)
@@ -102,7 +96,7 @@ class DraughtsBoard(Board):
                         regular_moves.append((from_sq, to_square))
                     # captures
                     if pos.get(to_square) is not None:
-                        if pos.get(to_square).owner() == other_player and (pos.get(to_square_beyond) == empty):
+                        if pos.get(to_square).owner == other_player and (pos.get(to_square_beyond) == empty):
                             captures.append((from_sq, to_square_beyond))
         if len(captures):
             lm = captures
@@ -160,7 +154,7 @@ class DraughtsBoard(Board):
         new_pos = self.position.copy()
 
         moving_piece = new_pos[from_square]
-        assert(moving_piece.owner() == player_to_move)
+        assert(moving_piece.owner == player_to_move)
 
         is_promotion = (to_square[0] == moving_piece.promotion_rank)
 
@@ -172,7 +166,7 @@ class DraughtsBoard(Board):
         is_capture = self._move_is_capture(move)
         if is_capture:
             empty_square = ((to_square[0] + from_square[0])/2, (to_square[1] + from_square[1])/2)
-            assert(new_pos[empty_square].owner() == player_to_move.other_player())
+            assert(new_pos[empty_square].owner == player_to_move.other_player())
             new_pos[empty_square] = DraughtsPiece['E']
 
         new_player_to_move = player_to_move.other_player()

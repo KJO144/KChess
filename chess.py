@@ -5,33 +5,27 @@ from collections import defaultdict
 
 class ChessPiece(Enum):
 
-    WK = ('W', 7, 999, "King")
-    WQ = ('W', 7, 9, "Queen")
-    WB = ('W', 7, 3, "Bishop")
-    WN = ('W', 7, 3, "Knight")
-    WR = ('W', 7, 5, "Rook")
-    WP = ('W', 7, 1, "Pawn")
+    WK = (Player['W'], 7, 999, "King")
+    WQ = (Player['W'], 7, 9, "Queen")
+    WB = (Player['W'], 7, 3, "Bishop")
+    WN = (Player['W'], 7, 3, "Knight")
+    WR = (Player['W'], 7, 5, "Rook")
+    WP = (Player['W'], 7, 1, "Pawn")
 
-    BK = ('B', 0, 999, "King")
-    BQ = ('B', 0, 9, "Queen")
-    BB = ('B', 0, 3, "Bishop")
-    BN = ('B', 0, 3, "Knight")
-    BR = ('B', 0, 5, "Rook")
-    BP = ('B', 0, 1, "Pawn")
+    BK = (Player['B'], 0, 999, "King")
+    BQ = (Player['B'], 0, 9, "Queen")
+    BB = (Player['B'], 0, 3, "Bishop")
+    BN = (Player['B'], 0, 3, "Knight")
+    BR = (Player['B'], 0, 5, "Rook")
+    BP = (Player['B'], 0, 1, "Pawn")
 
     E = (None, None, None, None)
 
-    def __init__(self, owner_name, promotion_rank, gvalue, type):
-        self.owner_name = owner_name
+    def __init__(self, owner, promotion_rank, gvalue, type):
+        self.owner = owner
         self.promotion_rank = promotion_rank
         self.gvalue = gvalue
         self.type = type
-
-    def owner(self):
-        if self.owner_name:
-            return Player[self.owner_name]
-        else:
-            return None
 
     def promotes_to(self):
         """What does this piece promote to when it hits the back rank"""
@@ -84,18 +78,18 @@ def _offset_square(square, offset):
 def _moves_for_direction(pos, start_square, max_distance, direction, include_captures=True, only_captures=False):
     end_squares = []
     piece = pos[start_square]
-    tomove = piece.owner()
+    tomove = piece.owner
 
     for i in range(1, max_distance+1):
         offset = (direction[0]*i, direction[1]*i)
         sq = _offset_square(start_square, offset)
         if sq[0] < 0 or sq[0] > 7 or sq[1] < 0 or sq[1] > 7:
             break
-        owner = pos[sq].owner()
-        if owner == tomove:
+        owner = pos[sq].owner
+        if owner is tomove:
             break
 
-        if owner == tomove.other_player():
+        if owner is tomove.other_player():
             if include_captures:
                 end_squares.append(sq)
             break
@@ -150,7 +144,7 @@ class ChessBoard(Board):
         moves = []
         E = ChessPiece['E']
 
-        relevant_pieces = {sq: piece for sq, piece in pos.items() if piece.owner() == player_to_move}
+        relevant_pieces = {sq: piece for sq, piece in pos.items() if piece.owner == player_to_move}
 
         for from_sq, piece in relevant_pieces.items():
             if piece == ChessPiece['WP']:
@@ -269,7 +263,7 @@ class ChessBoard(Board):
         sums = defaultdict(int)
 
         for piece, count in counts.items():
-            sums[piece.owner()] += count * piece.gvalue
+            sums[piece.owner] += count * piece.gvalue
         W = sums[Player['W']]
         B = sums[Player['B']]
 
@@ -287,7 +281,7 @@ class ChessBoard(Board):
         new_pos = self.position.copy()
 
         moving_piece = new_pos[from_square]
-        assert(moving_piece.owner() == player_to_move)
+        assert(moving_piece.owner == player_to_move)
 
         is_promotion = (to_square[0] == moving_piece.promotion_rank)
 
