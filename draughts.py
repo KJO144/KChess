@@ -81,7 +81,18 @@ class DraughtsBoard(Board):
         regular_moves = []
         captures = []
         empty = DraughtsPiece['E']
+        valid_piece = None
+        prev_move = self.previous_move
+        # check if we are in the middle of a multicapture. If so, we can only move the capturing piece.
+        if prev_move != "none":
+            prev_player = pos[prev_move[1]].owner()
+            was_capture = self._move_is_capture(prev_move)
+            if prev_player == player_to_move and was_capture:
+                valid_piece = prev_move[1]
+
         for from_sq, Piece in pos.items():
+            if valid_piece and valid_piece != from_sq:
+                continue
             if Piece.owner() == player_to_move:
                 for (xm, ym) in self._moves[Piece]:
                     to_square = (from_sq[0] + xm, from_sq[1] + ym)
