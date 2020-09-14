@@ -42,12 +42,14 @@ function update_board(position){
     */
     let board_pos = position['position']
     let tomove = position['player_to_move']
+    let previous_move = position['previous_move']
     for(i=0; i<board_size; i++){			
         for(j=0; j<board_size; j++){
             let sq = 'S' + String(i) + String(j)
             draw_piece(sq, board_pos[sq])
         }	
     }
+    document.getElementById('previous-move').setAttribute('value', previous_move)
     document.getElementById('to-move').setAttribute('to-move', tomove)
     document.getElementById('to-move-box').setAttribute('style','fill:' + piece_colours[tomove] )
 
@@ -82,8 +84,9 @@ function get_position(){
         pos[sq] = piece
     }
     let tomove = get_tomove()
+    let previous_move = get_previous_move()
 
-    let ret = {position: pos, player_to_move: tomove}
+    let ret = {position: pos, player_to_move: tomove, previous_move: previous_move}
 
     let castling = document.getElementsByClassName('castling')
     
@@ -104,6 +107,10 @@ function get_game(){
 
 function get_tomove(){
     return(document.getElementById('to-move').getAttribute('to-move'))
+}
+
+function get_previous_move(){
+    return(document.getElementById('previous-move').getAttribute('value'))
 }
 
 function get_initial_position(){

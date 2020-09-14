@@ -33,9 +33,12 @@ class Board(ABC):
     def to_json(self):
         winner = self.winner()
 
-        ret = self.__dict__
+        ret = self.__dict__.copy()
         ret['player_to_move'] = ret['player_to_move'].name
         ret['position'] = {f"S{square[0]}{square[1]}": piece.name for square, piece in ret['position'].items()}
+        lm = ret['previous_move']
+        if lm != "none":
+            ret['previous_move'] = f"S{lm[0][0]}{lm[0][1]}_{lm[1][0]}{lm[1][1]}"
         if winner is not None:
             ret['winner'] = winner
         ret = json.dumps(ret)

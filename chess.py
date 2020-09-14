@@ -73,6 +73,7 @@ def _initial_position():
 
     can_castle = {'WQS': True, 'BQS': True, 'WKS': True, 'BKS': True}
     position = {'position': pos, 'player_to_move': Player['W'], 'can_castle': can_castle, 'history': []}
+    position['previous_move'] = "none"
     return position
 
 
@@ -107,7 +108,7 @@ def _moves_for_direction(pos, start_square, max_distance, direction, include_cap
 
 class ChessBoard(Board):
 
-    instreams = ['player_to_move', 'position', 'can_castle', 'history']
+    instreams = ['player_to_move', 'position', 'can_castle', 'previous_move']
 
     _diag_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WB'], ChessPiece['BB']]
     _straight_movers = [ChessPiece['WQ'], ChessPiece['BQ'], ChessPiece['WR'], ChessPiece['BR']]
@@ -323,9 +324,7 @@ class ChessBoard(Board):
 
         new_turn = player_to_move.other_player()
 
-        history = self.history.copy()
-        history.append(self._squid(move))
-        return ChessBoard(position=new_pos, player_to_move=new_turn, can_castle=can_castle, history=history)
+        return ChessBoard(position=new_pos, player_to_move=new_turn, can_castle=can_castle, previous_move=move)
 
     def __str__(self):
         """Return a string representation of the board"""
@@ -339,23 +338,11 @@ class ChessBoard(Board):
         ret += f" ({self.player_to_move}) ({evaluation}) ({cannot_castle})"
         return ret
 
-    def game_history(self):
-        ret = ""
-        i = 1
-        for counter, move in enumerate(self.history):
-            if counter % 2 == 0:
-                ret += f"{i}. "
-                i += 1
-
-            ret += f"{move} "
-        return ret
-
     def _squid(self, move):
         from_sq, to_sq = move
         piece = self.position[from_sq].name
 
         is_capture = self.position[to_sq] != ChessPiece['E']
-
         capture_string = 'x' if is_capture else ''
         desc = '' if piece in ['WP', 'BP'] and not is_capture else piece[1]
         return (f"{desc}{capture_string}{chr(96+to_sq[1]+1)}{to_sq[0]+1}")

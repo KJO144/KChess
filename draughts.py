@@ -57,7 +57,7 @@ def _captures_available(position, player_to_move, from_sq):
 
 class DraughtsBoard(Board):
 
-    instreams = ['player_to_move', 'position']
+    instreams = ['player_to_move', 'position', 'previous_move']
     _moves = {
             DraughtsPiece['W']: [(1, 1), (1, -1)],
             DraughtsPiece['B']: [(-1, -1), (-1, 1)],
@@ -65,9 +65,10 @@ class DraughtsBoard(Board):
             DraughtsPiece['BK']: [(1, 1), (1, -1), (-1, 1), (-1, -1)],
     }
 
-    def __init__(self, position=_initial_position(), player_to_move=Player['W']):
+    def __init__(self, position=_initial_position(), player_to_move=Player['W'], previous_move="none"):
         self.player_to_move = player_to_move
         self.position = position
+        self.previous_move = previous_move
 
     def legal_moves(self):
         """
@@ -130,7 +131,7 @@ class DraughtsBoard(Board):
         W = counts[DraughtsPiece['W']] + 2*counts[DraughtsPiece['WK']]
         B = counts[DraughtsPiece['B']] + 2*counts[DraughtsPiece['BK']]
 
-        return (W-B)/(W+B)
+        return W-B
 
     def game_over(self):
         """
@@ -157,7 +158,7 @@ class DraughtsBoard(Board):
         new_pos[to_square] = landing_piece
         new_pos[from_square] = DraughtsPiece['E']
 
-        is_capture = abs(to_square[1] - from_square[1]) == 2 and abs(to_square[0] - from_square[0]) == 2
+        is_capture = self._move_is_capture(move)
         if is_capture:
             empty_square = ((to_square[0] + from_square[0])/2, (to_square[1] + from_square[1])/2)
             assert(new_pos[empty_square].owner() == player_to_move.other_player())
@@ -169,7 +170,11 @@ class DraughtsBoard(Board):
         is_multi_capture = is_capture and _captures_available(new_pos, player_to_move, to_square)
         new_player_to_move = player_to_move if is_multi_capture else player_to_move.other_player()
 
-        return DraughtsBoard(new_pos, new_player_to_move)
+        return DraughtsBoard(new_pos, new_player_to_move, move)
+
+    def _move_is_capture(self, move):
+        from_square, to_square = move
+        return abs(to_square[1] - from_square[1]) == 2 and abs(to_square[0] - from_square[0]) == 2
 
     def __str__(self):
         """Return a string representation of the board"""
