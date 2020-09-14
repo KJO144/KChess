@@ -1,4 +1,16 @@
-from chess import ChessBoard
+from chess import ChessBoard, ChessPiece
+from base import Player
+
+
+E = ChessPiece['E']
+
+
+def empty_position():
+    position = {}
+    for i in range(8):
+        for j in range(8):
+            position[(i, j)] = E
+    return position
 
 
 def test_starting_pos_legal_moves():
@@ -9,7 +21,7 @@ def test_starting_pos_legal_moves():
     assert len(lm) == 20
 
 
-def test_castling_WKS():
+def test_castling_KS():
     """Test king side castling."""
     b = ChessBoard()
     b = b.make_move(((1, 4), (3, 4)))  # e4
@@ -42,3 +54,31 @@ def test_castling_WKS():
 
     # check black cannot castle
     assert black_castle not in b.legal_moves()
+
+
+def test_promotion():
+    """
+    When pawns reach the back rank they should become queens (currently we don't support under-promotion).
+    When other pieces move to the back rank, they should remain as themselves.
+    """
+    position = empty_position()
+    position[(6, 0)] = ChessPiece['WP']  # a7
+    position[(1, 4)] = ChessPiece['BP']  # e2
+    position[(0, 0)] = ChessPiece['WK']  # a1
+    position[(0, 7)] = ChessPiece['BK']  # h1
+    position[(5, 5)] = ChessPiece['WB']  # f6
+    position[(1, 6)] = ChessPiece['BR']  # g2
+    can_castle = {'WKS': False, 'WQS': False, 'BKS': False, 'BQS': False}
+    board = ChessBoard(position=position, can_castle=can_castle, last_move=None, player_to_move=Player['W'])
+
+    nb = board.make_move(((6, 0), (7, 0)))  # a8=Q
+    assert nb.position[(7, 0)] == ChessPiece['WQ'], "white promotion"
+
+    nb = board.make_move(((5, 5), (7, 3)))  # Bd8
+    assert nb.position[(7, 3)] == ChessPiece['WB'], "white piece moves to back rank"
+
+    nb2 = nb.make_move(((1, 4), (0, 4)))  # e1=Q
+    assert nb2.position[(0, 4)] == ChessPiece['BQ'], "black promotion"
+
+    nb2 = nb.make_move(((1, 6), (0, 6)))  # Rg1
+    assert nb2.position[(0, 6)] == ChessPiece['BR'], "black piece moves to back rank"
