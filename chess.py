@@ -37,11 +37,16 @@ class ChessPiece(Enum):
         return ret
 
 
-def _initial_position():
+def blank_board(piece=ChessPiece['E']):
     pos = {}
     for i in range(8):
         for j in range(8):
-            pos[(i, j)] = ChessPiece['E']
+            pos[(i, j)] = piece
+    return pos
+
+
+def _initial_position():
+    pos = blank_board()
 
     pos[(0, 0)] = ChessPiece['WR']
     pos[(0, 1)] = ChessPiece['WN']
